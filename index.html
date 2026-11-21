@@ -219,6 +219,18 @@ html.ov,body.ov{background:transparent!important;background-image:none!important
 #fw{position:fixed;inset:0;z-index:260;background:var(--bz-0,#06150e);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2vh 2vw;gap:2vh}
 #fw[hidden]{display:none}
 #fwX{position:absolute;top:10px;right:14px;height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;font:700 18px var(--f-display,sans-serif);letter-spacing:.06em;text-transform:uppercase;opacity:.9}
+ #fwV{position:absolute;top:10px;right:150px;height:46px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;font:700 18px var(--f-display,sans-serif);letter-spacing:.06em;text-transform:uppercase;opacity:.9}
+#fwv{display:none;flex:1;min-height:0;width:100%;align-items:center;justify-content:center}
+#fw.vid #fwv{display:flex}
+#fwv iframe{width:100%;height:100%;max-width:calc((100vh - 36vh)*1.7778);border:0;border-radius:14px;background:#000}
+#fw.vid{gap:1vh;padding:62px 2vw 6px}
+#fw.vid .tvs{font-size:clamp(44px,15vh,200px)}
+#fw.vid .tvn{font-size:clamp(16px,4.2vh,50px)}
+#fw.vid .tvb{font-size:clamp(12px,3vh,36px);min-height:1em}
+#fw.vid .tvw{font-size:clamp(24px,6vh,70px)}
+#fw.vid .tvp{padding:.6vh .6vw;border-radius:16px}
+#fw.vid .tvf{font-size:clamp(11px,2.4vh,26px)}
+#fw.vid .fwinfo{font-size:clamp(12px,2.6vh,26px)}
 .fwinfo{display:flex;flex-wrap:wrap;gap:1vh 3vw;justify-content:center;font-size:clamp(14px,3.2vh,34px);opacity:.8}
 .fwinfo b{color:var(--ink,#fff)}
 .lvcard{cursor:pointer}
@@ -585,12 +597,14 @@ textarea.bk{width:100%;min-height:90px;border-radius:10px;border:1px solid var(-
   <div class="ovp p1 r" id="ovp1"><span class="ovdot"></span><span class="ovn" id="ovn1"></span><span class="ovs" id="ovs1">0</span></div>
 </div></div>
 <div id="fw" hidden>
+  <button id="fwV" type="button">Score seul</button>
   <button id="fwX" type="button" aria-label="Quitter le suivi">× Quitter</button>
   <div class="tvrow">
     <div class="tvp p0" id="fwp0"><div class="tvn" id="fwn0"></div><div class="tvs" id="fws0">0</div><div class="tvb" id="fwb0"></div></div>
     <div class="tvmid"><div class="tvw" id="fww">0 – 0</div><div class="tvf" id="fwf"></div></div>
     <div class="tvp p1" id="fwp1"><div class="tvn" id="fwn1"></div><div class="tvs" id="fws1">0</div><div class="tvb" id="fwb1"></div></div>
   </div>
+  <div id="fwv"><iframe id="fwFrame" allowfullscreen allow="autoplay; fullscreen" title="Live Twitch"></iframe></div>
   <div class="fwinfo" id="fwi"></div>
 </div>
 
@@ -988,6 +1002,7 @@ textarea.bk{width:100%;min-height:90px;border-radius:10px;border:1px solid var(-
         <button class="btn" id="syOv" type="button">Copier le lien du bandeau de streaming</button>
         <button class="btn primary" id="syNow" type="button">Synchroniser maintenant</button>
       </div>
+      <label class="full">Chaîne Twitch (vidéo du live dans « Suivi en direct »)<input id="syTw" type="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="batflack46"></label>
       <label class="full">Adresse web de l’application (pour le bandeau de streaming)<input id="syWeb" type="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://mon-snooker.netlify.app"></label>
       <p class="note">Bandeau de score façon télé pour un live (Streamlabs, OBS…) : collez le lien copié comme « page web / URL » dans votre logiciel de streaming. Ne le publiez pas : il contient l’accès à votre club.</p>
       <p class="note" id="syStat"></p>
@@ -2814,8 +2829,26 @@ textarea.bk{width:100%;min-height:90px;border-radius:10px;border:1px solid var(-
     fwBusy=true;
     fsSince('live',Date.now()-150000).then(function(r){fwBusy=false;liveDocs=r;updateFW();}).catch(function(){fwBusy=false;});
   }
+  var fwVid=true;
+  function twCh(){
+    var v=((S.sync&&S.sync.twitch)||'batflack46').trim();
+    var m=/twitch\.tv\/([A-Za-z0-9_]+)/i.exec(v);if(m)v=m[1];
+    v=v.replace(/[^A-Za-z0-9_]/g,'');return v;
+  }
+  function setFwVid(on){
+    fwVid=on;var fw=$('#fw'),fr=$('#fwFrame'),ch=twCh(),host=location.hostname;
+    var can=on&&ch&&/^https?:/.test(location.protocol)&&host;
+    fw.classList.toggle('vid',!!can);
+    $('#fwV').textContent=on?'Score seul':'Vidéo';
+    $('#fwV').hidden=!ch;
+    if(can){
+      var u='https://player.twitch.tv/?channel='+encodeURIComponent(ch)+'&parent='+encodeURIComponent(host)+'&muted=true&autoplay=true';
+      if(fr.getAttribute('data-u')!==u){fr.setAttribute('data-u',u);fr.src=u;}
+    }else{fr.removeAttribute('data-u');fr.src='about:blank';}
+  }
+  $('#fwV').addEventListener('click',function(){setFwVid(!fwVid);});
   function openFW(dev){
-    fwDev=dev;fwApSeen=0;
+    fwDev=dev;fwApSeen=0;setFwVid(fwVid);
     var r=fwDoc();if(r&&r.d&&r.d.ap)fwApSeen=r.d.ap.id;
     $('#fw').hidden=false;updateFW();
     clearInterval(fwTimer);fwTimer=setInterval(function(){fwPoll();updateFW();},1500);
@@ -2824,6 +2857,7 @@ textarea.bk{width:100%;min-height:90px;border-radius:10px;border:1px solid var(-
     try{if(navigator.wakeLock&&!wake)navigator.wakeLock.request('screen').then(function(l){wake=l;l.addEventListener('release',function(){wake=null;});}).catch(function(){});}catch(e){}
   }
   function closeFW(){
+    $('#fwFrame').src='about:blank';
     $('#fw').hidden=true;clearInterval(fwTimer);fwTimer=null;
     try{if(isFs()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}}catch(e){}
   }
@@ -2862,6 +2896,10 @@ textarea.bk{width:100%;min-height:90px;border-radius:10px;border:1px solid var(-
     if(S.sync.on)syncNow(true);else syStatus('Synchronisation désactivée.');
   });});
   $('#syNow').addEventListener('click',function(){syRead();if(!S.sync.on){S.sync.on=true;$('#syOn').checked=true;save();}syncNow(true);});
+  (function(){
+    var t=$('#syTw');t.value=S.sync.twitch!=null?S.sync.twitch:'batflack46';
+    t.addEventListener('change',function(){S.sync.twitch=t.value.trim();save();});
+  })();
   (function(){
     var w=$('#syWeb');
     if(/^https?:/.test(location.protocol))w.value=(S.sync.webUrl||(location.origin+location.pathname));else w.value=S.sync.webUrl||'';

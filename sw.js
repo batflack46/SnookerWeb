@@ -1,5 +1,5 @@
 /* Service worker v5: cache-first (stale-while-revalidate) so the app opens instantly and fully offline */
-var CACHE='snooker-v52';
+var CACHE='snooker-v53';
 var SHELL=['./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-512.png','./icons/apple-touch-icon.png'];
 function clean(res){ /* a redirected response cannot be served for a navigation */
   if(!res.redirected)return Promise.resolve(res);
